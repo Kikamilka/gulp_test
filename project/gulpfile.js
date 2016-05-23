@@ -7,6 +7,8 @@ const debug = require('gulp-debug'); // отображает весь проце
 const sourcemaps = require('gulp-sourcemaps'); // map file
 const gulpIf = require('gulp-if'); // проверка условия на этапе выполнения потоков
 const del = require('del');
+const browserSync = require('browser-sync').create();
+
 const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV == 'development';
 
 gulp.task('styles', function() {
@@ -22,15 +24,18 @@ gulp.task('clean', function() {
 });
 
 gulp.task('assets', function() {
-    return gulp.src('frontend/assets/**', {since: gulp.lastRun('assets')})
-        .pipe(debug({title: 'assets'}))
+    return gulp.src('frontend/assets/**', {
+            since: gulp.lastRun('assets')
+        })
+        .pipe(debug({
+            title: 'assets'
+        }))
         .pipe(gulp.dest('public'));
 });
 
 gulp.task('build', gulp.series(
-    'clean', 
-    gulp.parallel('styles', 'assets'))
-);
+    'clean',
+    gulp.parallel('styles', 'assets')));
 
 gulp.task('watch', function() {
     // наблюдает за изменениями в файле styles и сразу все пересобирается! 
@@ -39,4 +44,14 @@ gulp.task('watch', function() {
     gulp.watch('frontend/assets/**/*.*', gulp.series('assets'));
 });
 
-gulp.task('dev', gulp.series('build', 'watch'));
+gulp.task('serve', function() {
+    browserSync.init({
+        server: 'public'
+    });
+
+    browserSync.watch('public/**/*.*').on('change', browserSync.reload);
+});
+
+gulp.task('dev',
+    gulp.series('build', gulp.parallel('watch', 'serve'))
+);
